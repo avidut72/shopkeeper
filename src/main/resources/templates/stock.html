@@ -6,6 +6,144 @@
 </head>
 <body>
     <div th:replace="fragments/header :: header" />
-    <h1> this is stock page</h1>
-</body>
+    <div class="container">
+    	<h1>Stock Details</h1>
+    	<form class="form-horizontal" id="submitForm">
+            <fieldset>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Product Name:</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" id="productId" />
+                        <input type="text" id="productName"  class="form-control" style="margin-left: 10px;" />
+                    </div>
+                    <div class="form-group">
+                        <label style="margin-left: 20px;">Quantity:</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" id="productId" />
+                        <input type="text" id="quantity"  class="form-control" style="margin-left: 10px;" />
+                    </div>
+                    <div class="form-group">
+                        <label style="margin-left: 20px;">Rate:</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" id="productId" />
+                        <input type="text" id="rate"  class="form-control" style="margin-left: 10px;" />
+                    </div>
+                    <button type="submit" id="save" class="btn bg-primary"  style="height: 40px; width: 100px; margin-left: 40px;">Save</button>
+                </div>
+            </fieldset>
+        </form>
+        <button onclick="loadDataTable()" class="btn bg-info">Show Stock</button>
+        <h1>Stock Table</h1>
+        <table id="prolst" class="table table-striped">
+        	<thead>
+        		<tr>
+        			<th>Product Id</th>
+        			<th>Product Name</th>
+        			<th>Quantity</th>
+        			<th>Rate</th>
+        			<th>Action</th>
+        		</tr>
+        	</thead>        	
+        </table>
+    </div>
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//cdn.datatables.net/1.9.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+    	function loadDataTable(){
+    		var products=[];
+    		$.ajax({
+    			url: "/products",
+    			type:"GET",
+    			success: function(response){
+    				products=response;
+    				var table=$('#prolst').DataTable({
+    					"aaData":products,
+    					"aoColumns":[
+    						{"mDataProp":"productId"},
+    						{"mDataProp":"productName"},
+    						{"mDataProp":"quantity"},
+    						{"mDataProp":"rate"}
+    					],
+    					"bDestroy":true
+    				})
+    				$.each(table.find('tbody tr'), function (index, element) {
+                            var tr = $(element);
+                            var td1 = $('<td/>');
+                            var td2 = $('<td/>');
+                            td1.html('<button class="btn btn-primary" onclick="edit(this)">Edit</button>');
+                            tr.append(td1);
+                            td2.html('<button class="btn btn-danger" onclick="deleteProduct(this)">Delete Product</button>');
+                            tr.append(td2);
+                        })
+    			},
+    			error:function(error){
+
+    			}
+    		})
+    	}
+    	function edit(buttonRef){
+    		var button=$(buttonRef);
+    		var tr=button.closest('tr');
+    		var productId=tr.find('td:nth-child(1)').text();
+    		var productName=tr.find('td:nth-child(2)').text();
+    		var quantity=tr.find('td:nth-child(3)').text();
+    		var rate=tr.find('td:nth-child(4)').text();
+
+    		$('#productId').val(productId);
+    		$('#productName').val(productName);
+    		$('#quantity').val(quantity);
+    		$('#rate').val(rate);
+    	}
+    	function deleteProduct(buttonRef){
+    		var button=$(buttonRef);
+    		var tr=button.closest('tr');
+    		var productId=tr.find('td:nth-child(1)').text();
+
+    		$.ajax({
+    			url:'/products?productId='+productId,
+    			type:"DELETE",
+    			success:function(response){
+    				loadDataTable();
+    			}
+    		})
+    	}
+    	$(document).ready(function(){
+    		$('#submitForm').submit(function(event){
+    			event.preventDefault();
+    			saveProduct();
+    		});
+    		function saveProduct(){
+    			var product={};
+    			product.productName=$('#productName').val();
+    			product.productId=$('#productId').val();
+    			product.quantity=$('#quantity').val();
+    			product.rate=$('#rate').val();
+
+    			$.ajax({
+    				url:"/products",
+    				type:"POST",
+    				contentType:"application/json",
+    				data: JSON.stringify(product),
+    				dataType:"json",
+    				success:function(response){
+    					$('#productName').empty();
+    					$('#quantity').empty();
+    					$('#rate').empty();
+    					alert('saved successfully')
+    				},
+    				error:function(error){
+    					$('#productName').empty();
+    					$('#quantity').empty();
+    					$('#rate').empty();
+    					loadDataTable();
+    				}
+    			})
+    		}
+    	})
+    </script>
+ </body>
 </html>
